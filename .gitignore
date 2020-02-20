@@ -1,0 +1,15 @@
+
+__pycache__/
+.idea/
+save/
+TrainedData_ori/
+word2vec_models/
+
+TrainedData/*.p
+TrainedData/*.pth
+TrainedData/*.csv
+
+
+
+*.p
+
