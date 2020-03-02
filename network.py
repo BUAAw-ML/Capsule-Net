@@ -32,6 +32,10 @@ class CapsNet_Text(nn.Module):
 
     def compression(self, poses, W):
         poses = torch.matmul(poses.permute(0,2,1), W).permute(0,2,1)
+        # 比如图片img的size比如是（28，28，3）就可以利用img.permute(2, 0, 1)
+        # 得到一个size为（3，28，28）的tensor
+        # torch.matmul代表两张量的矩阵乘积
+
         activations = torch.sqrt((poses ** 2).sum(2))
         return poses, activations
 
@@ -41,11 +45,18 @@ class CapsNet_Text(nn.Module):
         for i in range(len(self.ngram_size)):
             nets = self.convs_doc[i](data)
             nets_doc_l.append(nets)
+
         nets_doc = torch.cat((nets_doc_l[0], nets_doc_l[1], nets_doc_l[2]), 2)
+        # 使用torch.cat((A,B),dim)时，除拼接维数dim数值可不同外其余维数数值需相同，方能对齐
+
         poses_doc, activations_doc = self.primary_capsules_doc(nets_doc)
+
         poses, activations = self.flatten_capsules(poses_doc, activations_doc)
+
         poses, activations = self.compression(poses, self.W_doc)
+
         poses, activations = self.fc_capsules_doc_child(poses, activations, labels)
+
         return poses, activations
 
 
