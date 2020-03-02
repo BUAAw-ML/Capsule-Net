@@ -96,13 +96,14 @@ class XML_CNN(nn.Module):
         super(XML_CNN, self).__init__()
         self.embed = nn.Embedding(args.vocab_size, args.vec_size)
         self.embed.weight = nn.Parameter(torch.from_numpy(w2v))
-        self.conv13 = nn.Conv1d(500, 32, 2, stride=2)
-        self.conv14 = nn.Conv1d(500, 32, 4, stride=2)
-        self.conv15 = nn.Conv1d(500, 32, 8, stride=2)
+        self.conv13 = nn.Conv1d(args.sequence_length, 32, 2, stride=2)
+        self.conv14 = nn.Conv1d(args.sequence_length, 32, 4, stride=2)
+        self.conv15 = nn.Conv1d(args.sequence_length, 32, 8, stride=2)
 
         self.fc1 = nn.Linear(14272, 512)
         self.fc2 = nn.Linear(512, args.num_classes)
         self.m = nn.Sigmoid()
+
     def conv_and_pool(self, x, conv):
         x = F.relu(conv(x)).squeeze(3)
         return x
@@ -121,3 +122,10 @@ class XML_CNN(nn.Module):
         hidden = self.fc1(x)
         activations = self.fc2(hidden)
         return self.m(activations)
+
+# what does 14272 mean ?
+# when con core step in voc_vectors(vec_size=300)
+# output is a matix and size is (((vec_size-core_size) / stride) +1) * output_channels
+# so in conv13 conv14 conv15
+# all output cat together , size is
+# (((300-2)/2+1)+((300-4)/2+1)+((300-8)/2+1))*32 = 14272

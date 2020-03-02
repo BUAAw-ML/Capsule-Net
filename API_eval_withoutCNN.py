@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from network import CNN_KIM,CapsNet_Text,XML_CNN
+from network import CNN_KIM,CapsNet_Text
 import random
 import time
 from utils import evaluate,evaluate_xin
@@ -82,23 +82,12 @@ args.num_classes = Y_trn.shape[1]
 
 capsule_net = CapsNet_Text(args, embedding_weights)
 capsule_net = nn.DataParallel(capsule_net).cuda()
-model_name = 'model-api-akde-29.pth'
+model_name = 'model-api-akde-2.pth'
 capsule_net.load_state_dict(torch.load(os.path.join(args.start_from, model_name)))
 print(model_name + ' loaded')
 
 
-# model_name = 'model-api-cnn-40.pth'
-# baseline = CNN_KIM(args, embedding_weights)
-# baseline = nn.DataParallel(baseline).cuda()
-# baseline.load_state_dict(torch.load(os.path.join(args.start_from, model_name)))
-# print(model_name + ' loaded')
-
-model_name = 'model-api-xml-cnn-41.pth'
-baseline = XML_CNN(args, embedding_weights)
-baseline = nn.DataParallel(baseline).cuda()
-baseline.load_state_dict(torch.load(os.path.join(args.start_from, model_name)))
-print(model_name + ' loaded')
-
+labels, target = transformLabels(Y_tst_o)
 
 nr_tst_num = X_tst.shape[0]
 nr_batches = int(np.ceil(nr_tst_num / float(args.ts_batch_size)))
@@ -109,7 +98,7 @@ print ('k_trn:', k_trn)
 print ('k_tst:', k_tst)
 
 capsule_net.eval()
-top_k = 30
+top_k = 50
 row_idx_list, col_idx_list, val_idx_list = [], [], []
 for batch_idx in range(nr_batches):
     start = time.time()
@@ -119,14 +108,11 @@ for batch_idx in range(nr_batches):
     Y = Y_tst_o[start_idx:end_idx]
     data = Variable(torch.from_numpy(X).long()).cuda()
 
-    candidates = baseline(data)
-    candidates = candidates.data.cpu().numpy()
 
-    Y_pred = np.zeros([candidates.shape[0], args.num_classes])
-    for i in range(candidates.shape[0]):
-        candidate_labels = candidates[i, :].argsort()[-args.re_ranking:][::-1].tolist()
-        _, activations_2nd = capsule_net(data[i, :].unsqueeze(0), candidate_labels)
-        Y_pred[i, candidate_labels] = activations_2nd.squeeze(2).data.cpu().numpy()
+    poses, activations = capsule_net(data,labels)
+
+    Y_pred = activations.squeeze(2) #batch_size*label_nums*1 --> batch_size*label_nums
+    Y_pred = Y_pred.data.cpu().numpy()
 
     for i in range(Y_pred.shape[0]):
         sorted_idx = np.argpartition(-Y_pred[i, :], top_k)[:top_k]
@@ -142,6 +128,7 @@ for batch_idx in range(nr_batches):
           batch_idx * 100 / nr_batches,
           0, elapsed),
           end="")
+
 
 m = max(row_idx_list) + 1
 n = max(k_trn, k_tst)

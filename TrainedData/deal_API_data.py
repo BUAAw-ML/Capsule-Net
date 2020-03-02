@@ -29,7 +29,7 @@ for i in tags:
         if j not in catgy.keys():
             count += 1
             catgy[j] = count
-
+#catgy 中 tag 从 1 开始标号 直至 ？
 
 #make data
 data = []

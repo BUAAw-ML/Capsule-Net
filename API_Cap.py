@@ -141,7 +141,7 @@ for epoch in range(args.num_epochs):
 
     torch.cuda.empty_cache()
 
-    if (epoch + 1) > 1:
+    if (epoch + 1) > 30:
         checkpoint_path = os.path.join('save', 'model-api-akde-' + str(epoch + 1) + '.pth')
         torch.save(capsule_net.state_dict(), checkpoint_path)
         print("model saved to {}".format(checkpoint_path))

@@ -9,7 +9,7 @@ import random
 import time
 from torch.autograd import Variable
 from torch.optim import Adam
-from network import CNN_KIM
+from network import XML_CNN
 from w2v import load_word2vec
 import data_helpers
 
@@ -59,7 +59,7 @@ embedding_weights = load_word2vec('glove', vocabulary_inv, args.vec_size)
 
 args.num_classes = Y_trn.shape[1]
 
-CNN_net = CNN_KIM( args , embedding_weights )
+CNN_net = XML_CNN( args , embedding_weights )
 CNN_net = nn.DataParallel(CNN_net).cuda()
 
 current_lr = args.learning_rate
@@ -121,6 +121,6 @@ for epoch in range(args.num_epochs):
     torch.cuda.empty_cache()
 
     if (epoch + 1) > 20:
-        checkpoint_path = os.path.join('save', 'model-api-cnn-' + str(epoch + 1) + '.pth')
+        checkpoint_path = os.path.join('save', 'model-api-xml-cnn-' + str(epoch + 1) + '.pth')
         torch.save(CNN_net.state_dict(), checkpoint_path)
         print(" model saved to {}".format(checkpoint_path))
