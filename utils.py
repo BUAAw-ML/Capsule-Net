@@ -53,3 +53,4 @@ def evaluate_xin(Y_tst_pred, Y_tst):
         results.append(get_result(x))
     tst_result = list(np.mean(np.array(results),0))
     print ('\rTst Prec@1,3,5: ', tst_result[:3], ' Tst NDCG@1,3,5: ', tst_result[3:])
+    return tst_result

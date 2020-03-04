@@ -26,7 +26,7 @@ parser.add_argument('--dataset', type=str, default='API_classify_data(Programweb
 parser.add_argument('--vocab_size', type=int, default=30001, help='vocabulary size')
 parser.add_argument('--vec_size', type=int, default=300, help='embedding size')
 parser.add_argument('--sequence_length', type=int, default=300, help='the length of documents')
-parser.add_argument('--num_epochs', type=int, default=41, help='Number of training epochs')
+parser.add_argument('--num_epochs', type=int, default=30, help='Number of training epochs')
 parser.add_argument('--tr_batch_size', type=int, default=256, help='Batch size for training')
 parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for training')
 parser.add_argument('--start_from', type=str, default='', help='')
@@ -120,7 +120,7 @@ for epoch in range(args.num_epochs):
 
     torch.cuda.empty_cache()
 
-    if (epoch + 1) > 20:
+    if (epoch + 1) > 0:
         checkpoint_path = os.path.join('save', 'model-api-cnn-' + str(epoch + 1) + '.pth')
         torch.save(CNN_net.state_dict(), checkpoint_path)
         print(" model saved to {}".format(checkpoint_path))

@@ -27,14 +27,14 @@ parser.add_argument('--vec_size', type=int, default=300, help='embedding size')
 parser.add_argument('--sequence_length', type=int, default=300, help='the length of documents')
 parser.add_argument('--is_AKDE', type=bool, default=True, help='if Adaptive KDE routing is enabled')
 parser.add_argument('--num_epochs', type=int, default=30, help='Number of training epochs')
-parser.add_argument('--ts_batch_size', type=int, default=32, help='Batch size for training')
+parser.add_argument('--ts_batch_size', type=int, default=128, help='Batch size for training')
 parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for training')
 parser.add_argument('--start_from', type=str, default='save', help='')
 
 parser.add_argument('--num_compressed_capsule', type=int, default=64, help='The number of compact capsules')
 parser.add_argument('--dim_capsule', type=int, default=8, help='The number of dimensions for capsules')
 
-parser.add_argument('--re_ranking', type=int, default=200, help='The number of re-ranking size')
+parser.add_argument('--re_ranking', type=int, default=80, help='The number of re-ranking size')
 
 
 def transformLabels(labels):
@@ -82,18 +82,18 @@ args.num_classes = Y_trn.shape[1]
 
 capsule_net = CapsNet_Text(args, embedding_weights)
 capsule_net = nn.DataParallel(capsule_net).cuda()
-model_name = 'model-api-akde-29.pth'
+model_name = 'model-api-akde-30.pth'
 capsule_net.load_state_dict(torch.load(os.path.join(args.start_from, model_name)))
 print(model_name + ' loaded')
 
 
-# model_name = 'model-api-cnn-40.pth'
+# model_name = 'model-api-cnn-30.pth'
 # baseline = CNN_KIM(args, embedding_weights)
 # baseline = nn.DataParallel(baseline).cuda()
 # baseline.load_state_dict(torch.load(os.path.join(args.start_from, model_name)))
 # print(model_name + ' loaded')
 
-model_name = 'model-api-xml-cnn-41.pth'
+model_name = 'model-api-xml-cnn-30.pth'
 baseline = XML_CNN(args, embedding_weights)
 baseline = nn.DataParallel(baseline).cuda()
 baseline.load_state_dict(torch.load(os.path.join(args.start_from, model_name)))

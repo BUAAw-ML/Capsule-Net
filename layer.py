@@ -4,6 +4,8 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import numpy as np
 
+USING_LEAKY_ROUTING = True
+
 def squash_v1(x, axis):
     s_squared_norm = (x ** 2).sum(axis, keepdim=True)
     # keepdim 为了保持 输出的 二维特性 而设置为 TRUE
@@ -16,7 +18,7 @@ def dynamic_routing(batch_size, b_ij, u_hat, input_capsule_num):
     num_iterations = 3
 
     for i in range(num_iterations):
-        if True:
+        if USING_LEAKY_ROUTING:
             leak = torch.zeros_like(b_ij).sum(dim=2, keepdim=True)
             leaky_logits = torch.cat((leak, b_ij),2)
             leaky_routing = F.softmax(leaky_logits, dim=2)
@@ -35,7 +37,7 @@ def dynamic_routing(batch_size, b_ij, u_hat, input_capsule_num):
 def Adaptive_KDE_routing(batch_size, b_ij, u_hat):
     last_loss = 0.0
     while True:
-        if False:
+        if USING_LEAKY_ROUTING:
             leak = torch.zeros_like(b_ij).sum(dim=2, keepdim=True)
             leaky_logits = torch.cat((leak, b_ij),2)
             leaky_routing = F.softmax(leaky_logits, dim=2)
@@ -65,7 +67,7 @@ def Adaptive_KDE_routing(batch_size, b_ij, u_hat):
 def KDE_routing(batch_size, b_ij, u_hat):
     num_iterations = 3
     for i in range(num_iterations):
-        if False:
+        if USING_LEAKY_ROUTING:
             leak = torch.zeros_like(b_ij).sum(dim=2, keepdim=True)
             leaky_logits = torch.cat((leak, b_ij),2)
             leaky_routing = F.softmax(leaky_logits, dim=2)

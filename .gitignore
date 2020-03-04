@@ -13,3 +13,10 @@ TrainedData/*.csv
 
 *.p
 
+
+analyse/~$test.xlsx
+analyse/cnn_kim.txt
+analyse/xml_cnn.txt
+analyse/test.xlsx
+test.py
+test.py
