@@ -34,9 +34,11 @@ parser.add_argument('--ts_batch_size', type=int, default=128, help='Batch size f
 parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for training')
 parser.add_argument('--start_from', type=str, default='save', help='')
 
-parser.add_argument('--short', type=int, default=1, help='use Cap or Cap_for_short_text')
+parser.add_argument('--CNN_type', type=int, default=1, help='0:xml_cnn 1:kim_cnn ...')
+parser.add_argument('--baseline', type=str, default='model-api-cnn-30.pth', help='use CNN as baseline, default is kim_cnn')
+parser.add_argument('--short', type=int, default=1, help='use Cap:0 or Cap_for_short_text:1')
 parser.add_argument('--capsule_name_root', type=str, default='model-api-akde-short-',help='full name is (root+id+".pth") ')
-parser.add_argument('--capsule_id_begin', type=int, default=1)
+parser.add_argument('--capsule_id_begin', type=int, default=21)
 parser.add_argument('--capsule_id_end', type=int, default=30)
 
 parser.add_argument('--num_compressed_capsule', type=int, default=64, help='The number of compact capsules')
@@ -96,5 +98,77 @@ m, k_tst = Y_tst.shape
 print ('k_trn:', k_trn)
 print ('k_tst:', k_tst)
 
-Y_tst_pred = np.zeros(Y_tst.shape)
 
+model_name = args.baseline
+if   args.CNN_type == 0 :
+    baseline = XML_CNN(args, embedding_weights)
+elif args.CNN_type == 1 :
+    baseline = CNN_KIM(args, embedding_weights)
+else :
+    assert False
+baseline = nn.DataParallel(baseline).cuda()
+baseline.load_state_dict(torch.load(os.path.join(args.start_from, model_name)))
+print(model_name + ' loaded')
+
+
+if   args.short == 0:
+    CapsNet = CapsNet_Text
+elif args.short == 1:
+    CapsNet = CapsNet_Text_short
+else :
+    assert False
+
+for id in range(args.capsule_id_begin,args.capsule_id_end):
+    capsule_net = CapsNet(args, embedding_weights)
+    capsule_net = nn.DataParallel(capsule_net).cuda()
+    model_name = "{}{}.pth".fromat(args.capsule_name_root,id)
+    capsule_net.load_state_dict(torch.load(os.path.join(args.start_from, model_name)))
+    print(model_name + ' loaded')
+
+    capsule_net.eval()
+    top_k = 30
+    row_idx_list, col_idx_list, val_idx_list = [], [], []
+    for batch_idx in range(nr_batches):
+        start = time.time()
+        start_idx = batch_idx * args.ts_batch_size
+        end_idx = min((batch_idx + 1) * args.ts_batch_size, nr_tst_num)
+        X = X_tst[start_idx:end_idx]
+        Y = Y_tst_o[start_idx:end_idx]
+        data = Variable(torch.from_numpy(X).long()).cuda()
+
+        candidates = baseline(data)
+        candidates = candidates.data.cpu().numpy()
+
+        Y_pred = np.zeros([candidates.shape[0], args.num_classes])
+        for i in range(candidates.shape[0]):
+            candidate_labels = candidates[i, :].argsort()[-args.re_ranking:][::-1].tolist()
+            _, activations_2nd = capsule_net(data[i, :].unsqueeze(0), candidate_labels)
+            Y_pred[i, candidate_labels] = activations_2nd.squeeze(2).data.cpu().numpy()
+
+        for i in range(Y_pred.shape[0]):
+            sorted_idx = np.argpartition(-Y_pred[i, :], top_k)[:top_k]
+            row_idx_list += [i + start_idx] * top_k
+            col_idx_list += (sorted_idx).tolist()
+            val_idx_list += Y_pred[i, sorted_idx].tolist()
+
+        done = time.time()
+        elapsed = done - start
+
+        print("\r Reranking: {} Iteration: {}/{} ({:.1f}%)  Loss: {:.5f} {:.5f}".format(
+            args.re_ranking, batch_idx, nr_batches,
+            batch_idx * 100 / nr_batches,
+            0, elapsed),
+            end="")
+
+    m = max(row_idx_list) + 1
+    n = max(k_trn, k_tst)
+    print('', elapsed)
+    Y_tst_pred = sp.csr_matrix((val_idx_list, (row_idx_list, col_idx_list)), shape=(m, n))
+
+    if k_trn >= k_tst:
+        Y_tst_pred = Y_tst_pred[:, :k_tst]
+
+    evaled = evaluate_xin(Y_tst_pred.toarray(), Y_tst)
+    with open(os.path.join('analyse', 'capsule.txt'), 'a', encoding='utf-8') as f:
+        print(model_name, *evaled, sep='\t', file=f)
+    del (capsule_net)
