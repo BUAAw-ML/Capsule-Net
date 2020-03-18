@@ -9,7 +9,8 @@ import random
 import time
 from torch.autograd import Variable
 from torch.optim import Adam
-from network import CapsNet_Text,BCE_loss
+from network import BCE_loss
+from network import CapsNet_Text_short as CapsNet_Text
 from w2v import load_word2vec
 import data_helpers
 
@@ -21,11 +22,11 @@ random.seed(0)
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--dataset', type=str, default='API_classify_data(Programweb).p',
+parser.add_argument('--dataset', type=str, default='API_classify_data_60_t_percent.p',
                     help='Options: eurlex_raw_text.p, API_classify_data(Programweb).p ')
 parser.add_argument('--vocab_size', type=int, default=30001, help='vocabulary size')
 parser.add_argument('--vec_size', type=int, default=300, help='embedding size')
-parser.add_argument('--sequence_length', type=int, default=300, help='the length of documents')
+parser.add_argument('--sequence_length', type=int, default=302, help='the length of documents')
 parser.add_argument('--is_AKDE', type=bool, default=True, help='if Adaptive KDE routing is enabled')
 parser.add_argument('--num_epochs', type=int, default=30, help='Number of training epochs')
 parser.add_argument('--tr_batch_size', type=int, default=256, help='Batch size for training')
@@ -133,16 +134,16 @@ for epoch in range(args.num_epochs):
         done = time.time()
         elapsed = done - start
 
-        print("\rIteration: {}/{} ({:.1f}%)  Loss: {:.5f} {:.5f}".format(
-                      iteration, nr_batches,
+        print("\rEpoch: {} Iteration: {}/{} ({:.1f}%)  Loss: {:.5f} {:.5f}".format(
+                      epoch, iteration, nr_batches,
                       iteration * 100 / nr_batches,
                       loss.item(), elapsed),
                       end="")
 
     torch.cuda.empty_cache()
 
-    if (epoch + 1) > 0:
-        checkpoint_path = os.path.join('save', 'model-api-akde-' + str(epoch + 1) + '.pth')
+    if (epoch + 1) > 20:
+        checkpoint_path = os.path.join('save', 'model-api-akde-short-' + str(epoch + 1) + '.pth')
         torch.save(capsule_net.state_dict(), checkpoint_path)
         print("model saved to {}".format(checkpoint_path))
 

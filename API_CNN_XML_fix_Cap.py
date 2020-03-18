@@ -1,3 +1,5 @@
+# un fixed yet !!!
+# this file shouldn't run until fixed
 from __future__ import division, print_function, unicode_literals
 import argparse
 import numpy as np
@@ -9,7 +11,7 @@ import random
 import time
 from torch.autograd import Variable
 from torch.optim import Adam
-from network import XML_CNN
+from network import XML_CNN_fix
 from w2v import load_word2vec
 import data_helpers
 
@@ -25,7 +27,7 @@ parser.add_argument('--dataset', type=str, default='API_classify_data_60_t_perce
                     help='Options: eurlex_raw_text.p, API_classify_data(Programweb).p ')
 parser.add_argument('--vocab_size', type=int, default=30001, help='vocabulary size')
 parser.add_argument('--vec_size', type=int, default=300, help='embedding size')
-parser.add_argument('--sequence_length', type=int, default=300, help='the length of documents')
+parser.add_argument('--sequence_length', type=int, default=302, help='the length of documents')
 parser.add_argument('--num_epochs', type=int, default=30, help='Number of training epochs')
 parser.add_argument('--tr_batch_size', type=int, default=256, help='Batch size for training')
 parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for training')
@@ -59,7 +61,7 @@ embedding_weights = load_word2vec('glove', vocabulary_inv, args.vec_size)
 
 args.num_classes = Y_trn.shape[1]
 
-CNN_net = XML_CNN( args , embedding_weights )
+CNN_net = XML_CNN_fix( args , embedding_weights )
 CNN_net = nn.DataParallel(CNN_net).cuda()
 
 current_lr = args.learning_rate
@@ -121,6 +123,6 @@ for epoch in range(args.num_epochs):
     torch.cuda.empty_cache()
 
     if (epoch + 1) > 0:
-        checkpoint_path = os.path.join('save', 'model-api-xml-cnn-' + str(epoch + 1) + '.pth')
+        checkpoint_path = os.path.join('save', 'model-api-xml-cnn-fix-' + str(epoch + 1) + '.pth')
         torch.save(CNN_net.state_dict(), checkpoint_path)
         print(" model saved to {}".format(checkpoint_path))

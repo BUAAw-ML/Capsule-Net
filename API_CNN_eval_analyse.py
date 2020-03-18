@@ -30,7 +30,7 @@ parser.add_argument('--num_epochs', type=int, default=30, help='Number of traini
 parser.add_argument('--ts_batch_size', type=int, default=128, help='Batch size for training')
 parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for training')
 parser.add_argument('--start_from', type=str, default='save', help='')
-parser.add_argument('--re_ranking', type=int, default=200, help='The number of re-ranking size')
+parser.add_argument('--re_ranking', type=int, default=80, help='The number of re-ranking size')
 
 parser.add_argument('--kim', type=int, default=1, help='whether evaluate CNN_KIM')
 parser.add_argument('--kim_name_root', type=str, default='model-api-cnn-',help='full name is (root+id+".pth") ')
@@ -146,4 +146,3 @@ if args.xml !=0:
             print(model_name,*evaled,sep='\t',file=f)
         del(baseline)
 
-# --xml 0 --kim_id_begin 1 --kim_id_end 19

@@ -21,7 +21,7 @@ random.seed(0)
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--dataset', type=str, default='API_classify_data(Programweb).p',
+parser.add_argument('--dataset', type=str, default='API_classify_data_60_t_percent.p',
                     help='Options: eurlex_raw_text.p, API_classify_data(Programweb).p ')
 parser.add_argument('--vocab_size', type=int, default=30001, help='vocabulary size')
 parser.add_argument('--vec_size', type=int, default=300, help='embedding size')

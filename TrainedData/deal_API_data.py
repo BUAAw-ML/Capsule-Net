@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import pickle
 
-testSize = 0.4 #训练集占0.6  测试集占0.4
+testSize = 0.1 #训练集占0.6  测试集占0.4
 
 
 fileName = "API_classify_data(Programweb).csv"
@@ -40,5 +40,5 @@ for i in range(0,len(descr)):
 # split data
 train , test = train_test_split(data, test_size = testSize, random_state = 1)
 
-with open('API_classify_data(Programweb).p','wb') as f:
+with open('API_classify_data_90_t_percent.p','wb') as f:
     pickle.dump([train,test,vocab,catgy],f)
