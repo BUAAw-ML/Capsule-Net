@@ -17,6 +17,7 @@ TrainedData/*.csv
 analyse/~$test.xlsx
 analyse/cnn_kim.txt
 analyse/xml_cnn.txt
+analyse/capsule.txt
 analyse/test.xlsx
 test.py
 test.py

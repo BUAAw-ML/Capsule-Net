@@ -77,11 +77,12 @@ class CapsNet_Text_short(nn.Module):
         torch.nn.init.xavier_uniform_(self.convs_doc[1].weight)
         torch.nn.init.xavier_uniform_(self.convs_doc[2].weight)
 
-        self.primary_capsules_doc = PrimaryCaps(num_capsules=args.dim_capsule, in_channels=128, out_channels=8, kernel_size=1, stride=1)
+        self.primary_capsules_doc = PrimaryCaps(num_capsules=args.dim_capsule, in_channels=128, out_channels=16, kernel_size=1, stride=1)
 
         self.flatten_capsules = FlattenCaps()
 
-        self.W_doc = nn.Parameter(torch.FloatTensor(7128, args.num_compressed_capsule))
+        self.W_doc = nn.Parameter(torch.FloatTensor(7128*2, args.num_compressed_capsule))
+        # when pri_cap_doc 's out channel is 8,  W_doc's is 7128
         torch.nn.init.xavier_uniform_(self.W_doc)
 
         self.fc_capsules_doc_child = FCCaps(args, output_capsule_num=args.num_classes, input_capsule_num=args.num_compressed_capsule,

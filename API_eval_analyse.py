@@ -37,14 +37,14 @@ parser.add_argument('--start_from', type=str, default='save', help='')
 parser.add_argument('--CNN_type', type=int, default=1, help='0:xml_cnn 1:kim_cnn ...')
 parser.add_argument('--baseline', type=str, default='model-api-cnn-30.pth', help='use CNN as baseline, default is kim_cnn')
 parser.add_argument('--short', type=int, default=1, help='use Cap:0 or Cap_for_short_text:1')
-parser.add_argument('--capsule_name_root', type=str, default='model-api-akde-short-',help='full name is (root+id+".pth") ')
-parser.add_argument('--capsule_id_begin', type=int, default=21)
-parser.add_argument('--capsule_id_end', type=int, default=30)
+parser.add_argument('--capsule_name_root', type=str, default='model-api-akde-short-60p-',help='full name is (root+id+".pth") ')
+parser.add_argument('--capsule_id_begin', type=int, default=1)
+parser.add_argument('--capsule_id_end', type=int, default=25)
 
 parser.add_argument('--num_compressed_capsule', type=int, default=64, help='The number of compact capsules')
 parser.add_argument('--dim_capsule', type=int, default=8, help='The number of dimensions for capsules')
 
-parser.add_argument('--re_ranking', type=int, default=10, help='The number of re-ranking size')
+parser.add_argument('--re_ranking', type=int, default=20, help='The number of re-ranking size,从baseline的结果中取这么多的label扔给capsule-net去排序')
 
 
 def transformLabels(labels):
@@ -118,10 +118,10 @@ elif args.short == 1:
 else :
     assert False
 
-for id in range(args.capsule_id_begin,args.capsule_id_end):
+for id in range(args.capsule_id_begin, args.capsule_id_end+1):
     capsule_net = CapsNet(args, embedding_weights)
     capsule_net = nn.DataParallel(capsule_net).cuda()
-    model_name = "{}{}.pth".fromat(args.capsule_name_root,id)
+    model_name = "{}{}.pth".format(args.capsule_name_root,id)
     capsule_net.load_state_dict(torch.load(os.path.join(args.start_from, model_name)))
     print(model_name + ' loaded')
 
@@ -154,7 +154,7 @@ for id in range(args.capsule_id_begin,args.capsule_id_end):
         done = time.time()
         elapsed = done - start
 
-        print("\r Reranking: {} Iteration: {}/{} ({:.1f}%)  Loss: {:.5f} {:.5f}".format(
+        print("\rReranking: {} Iteration: {}/{} ({:.1f}%)  Loss: {:.5f} {:.5f}".format(
             args.re_ranking, batch_idx, nr_batches,
             batch_idx * 100 / nr_batches,
             0, elapsed),

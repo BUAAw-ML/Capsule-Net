@@ -25,7 +25,7 @@ parser.add_argument('--dataset', type=str, default='API_classify_data_60_t_perce
                     help='Options: eurlex_raw_text.p, API_classify_data(Programweb).p ')
 parser.add_argument('--vocab_size', type=int, default=30001, help='vocabulary size')
 parser.add_argument('--vec_size', type=int, default=300, help='embedding size')
-parser.add_argument('--sequence_length', type=int, default=300, help='the length of documents')
+parser.add_argument('--sequence_length', type=int, default=302, help='the length of documents')
 parser.add_argument('--num_epochs', type=int, default=30, help='Number of training epochs')
 parser.add_argument('--tr_batch_size', type=int, default=256, help='Batch size for training')
 parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for training')
