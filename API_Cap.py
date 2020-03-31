@@ -124,6 +124,7 @@ for epoch in range(args.num_epochs):
         data = Variable(torch.from_numpy(X).long()).cuda()
 
         batch_labels, batch_target = transformLabels(Y)
+        # print('\nbatch_labels_len:',len(batch_labels))
         batch_target = Variable(torch.from_numpy(batch_target).float()).cuda()
         optimizer.zero_grad()
         poses, activations = capsule_net(data, batch_labels)
@@ -142,7 +143,7 @@ for epoch in range(args.num_epochs):
 
     torch.cuda.empty_cache()
 
-    if (epoch + 1) > 0:
+    if (epoch + 1) > 9:
         checkpoint_path = os.path.join('save', 'model-api-akde-short-60p-' + str(epoch + 1) + '.pth')
         torch.save(capsule_net.state_dict(), checkpoint_path)
         print("model saved to {}".format(checkpoint_path))

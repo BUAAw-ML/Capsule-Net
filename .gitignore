@@ -21,3 +21,5 @@ analyse/capsule.txt
 analyse/test.xlsx
 test.py
 test.py
+.ipynb_checkpoints/test-checkpoint.ipynb
+test.ipynb

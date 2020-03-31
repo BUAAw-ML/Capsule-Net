@@ -7,7 +7,7 @@ from torch.autograd import Variable
 from network import CNN_KIM,XML_CNN
 import random
 import time
-from utils import evaluate,evaluate_xin
+from utils import evaluate,evaluate_xin,AveragePrecisionMeter
 import data_helpers
 import scipy.sparse as sp
 from w2v import load_word2vec
@@ -52,19 +52,19 @@ Y_tst = Y_tst.astype(np.int32)
 embedding_weights = load_word2vec('glove', vocabulary_inv, args.vec_size)
 args.num_classes = Y_trn.shape[1]
 
-# # using CNN_KIM
-# model_name = 'model-api-cnn-40.pth'
-# baseline = CNN_KIM(args, embedding_weights)
-# baseline = nn.DataParallel(baseline).cuda()
-# baseline.load_state_dict(torch.load(os.path.join(args.start_from, model_name)))
-# print(model_name + ' loaded')
-
-# using XML_CNN
-model_name = 'model-api-xml-cnn-35.pth'
-baseline = XML_CNN(args, embedding_weights)
+# using CNN_KIM
+model_name = 'model-api-cnn-26.pth'
+baseline = CNN_KIM(args, embedding_weights)
 baseline = nn.DataParallel(baseline).cuda()
 baseline.load_state_dict(torch.load(os.path.join(args.start_from, model_name)))
 print(model_name + ' loaded')
+
+# # using XML_CNN
+# model_name = 'model-api-xml-cnn-28.pth'
+# baseline = XML_CNN(args, embedding_weights)
+# baseline = nn.DataParallel(baseline).cuda()
+# baseline.load_state_dict(torch.load(os.path.join(args.start_from, model_name)))
+# print(model_name + ' loaded')
 
 nr_tst_num = X_tst.shape[0]
 nr_batches = int(np.ceil(nr_tst_num / float(args.ts_batch_size)))
@@ -102,4 +102,12 @@ print(elapsed)
 if k_trn >= k_tst:
     Y_tst_pred = Y_tst_pred[:, :k_tst]
 
+# 使用NDCG评估
 evaluate_xin(Y_tst_pred, Y_tst)
+
+# 使用APM评估
+apm_evaler =  AveragePrecisionMeter()
+apm_evaler.add(Y_tst_pred,Y_tst)
+print(apm_evaler.overall_topk(3))
+for i in apm_evaler.value() :
+    print(i)
