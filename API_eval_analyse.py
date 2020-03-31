@@ -9,7 +9,7 @@ from network import CapsNet_Text
 from network import CapsNet_Text_short
 import random
 import time
-from utils import evaluate,evaluate_xin
+from utils import evaluate,evaluate_xin,AveragePrecisionMeter
 import data_helpers
 import scipy.sparse as sp
 from w2v import load_word2vec
@@ -37,8 +37,8 @@ parser.add_argument('--start_from', type=str, default='save', help='')
 parser.add_argument('--CNN_type', type=int, default=1, help='0:xml_cnn 1:kim_cnn ...')
 parser.add_argument('--baseline', type=str, default='model-api-cnn-30.pth', help='use CNN as baseline, default is kim_cnn')
 parser.add_argument('--short', type=int, default=1, help='use Cap:0 or Cap_for_short_text:1')
-parser.add_argument('--capsule_name_root', type=str, default='model-api-akde-short-60p-',help='full name is (root+id+".pth") ')
-parser.add_argument('--capsule_id_begin', type=int, default=1)
+parser.add_argument('--capsule_name_root', type=str, default='model-api-akde-short-60p-randomsample-',help='full name is (root+id+".pth") ')
+parser.add_argument('--capsule_id_begin', type=int, default=25)
 parser.add_argument('--capsule_id_end', type=int, default=25)
 
 parser.add_argument('--num_compressed_capsule', type=int, default=64, help='The number of compact capsules')
@@ -169,6 +169,10 @@ for id in range(args.capsule_id_begin, args.capsule_id_end+1):
         Y_tst_pred = Y_tst_pred[:, :k_tst]
 
     evaled = evaluate_xin(Y_tst_pred.toarray(), Y_tst)
+    apm = AveragePrecisionMeter()
+    apm.add(Y_tst_pred.toarray(),Y_tst)
+    evaled.append(float(apm.value().mean()))
+    print('apm:',evaled[-1])
     with open(os.path.join('analyse', 'capsule.txt'), 'a', encoding='utf-8') as f:
         print(model_name, *evaled, sep='\t', file=f)
     del (capsule_net)

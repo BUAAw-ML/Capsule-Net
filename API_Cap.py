@@ -19,6 +19,7 @@ torch.manual_seed(0)
 torch.cuda.manual_seed(0)
 np.random.seed(0)
 random.seed(0)
+BATCHRANDOMSAMPLE =True
 
 parser = argparse.ArgumentParser()
 
@@ -36,7 +37,7 @@ parser.add_argument('--start_from', type=str, default='', help='')
 parser.add_argument('--num_compressed_capsule', type=int, default=64, help='The number of compact capsules')
 parser.add_argument('--dim_capsule', type=int, default=8, help='The number of dimensions for capsules')
 
-parser.add_argument('--learning_rate_decay_start', type=int, default=0,
+parser.add_argument('--learning_rate_decay_start', type=int, default=10,
                     help='at what iteration to start decaying learning rate? (-1 = dont) (in epoch)')
 parser.add_argument('--learning_rate_decay_every', type=int, default=20,
                     help='how many iterations thereafter to drop LR?(in epoch)')
@@ -113,8 +114,14 @@ for epoch in range(args.num_epochs):
     print(' ',current_lr)
     set_lr(optimizer, current_lr)
 
+    if (epoch >0) and BATCHRANDOMSAMPLE:
+        temp = np.random.permutation(len(Y_trn_o))
+        X_trn = X_trn[temp,:]
+        Y_trn_o = [Y_trn_o[i] for i in temp]
+
+
     capsule_net.train()
-    for iteration, batch_idx in enumerate(np.random.permutation(range(nr_batches))):
+    for iteration, batch_idx in enumerate(np.random.permutation(range(nr_batches))): # batch 顺序 随机打乱
         start = time.time()
         start_idx = batch_idx * args.tr_batch_size
         end_idx = min((batch_idx + 1) * args.tr_batch_size, nr_trn_num)
@@ -143,8 +150,8 @@ for epoch in range(args.num_epochs):
 
     torch.cuda.empty_cache()
 
-    if (epoch + 1) > 9:
-        checkpoint_path = os.path.join('save', 'model-api-akde-short-60p-' + str(epoch + 1) + '.pth')
+    if (epoch + 1) > 0:
+        checkpoint_path = os.path.join('save', 'model-api-akde-short-60p-randomsample-' + str(epoch + 1) + '.pth')
         torch.save(capsule_net.state_dict(), checkpoint_path)
         print("model saved to {}".format(checkpoint_path))
 
