@@ -7,7 +7,7 @@ from torch.autograd import Variable
 from network import CNN_KIM,XML_CNN
 import random
 import time
-from utils import evaluate,evaluate_xin
+from utils import evaluate,evaluate_xin,AveragePrecisionMeter
 import data_helpers
 import scipy.sparse as sp
 from w2v import load_word2vec
@@ -21,11 +21,11 @@ random.seed(0)
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--dataset', type=str, default='API_classify_data(Programweb).p',
+parser.add_argument('--dataset', type=str, default='API_classify_data_80_t_percent.p',
                     help='Options: eurlex_raw_text.p, API_classify_data(Programweb).p')
 parser.add_argument('--vocab_size', type=int, default=30001, help='vocabulary size')
 parser.add_argument('--vec_size', type=int, default=300, help='embedding size')
-parser.add_argument('--sequence_length', type=int, default=300, help='the length of documents')
+parser.add_argument('--sequence_length', type=int, default=302, help='the length of documents')
 parser.add_argument('--num_epochs', type=int, default=30, help='Number of training epochs')
 parser.add_argument('--ts_batch_size', type=int, default=128, help='Batch size for training')
 parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for training')
@@ -33,12 +33,12 @@ parser.add_argument('--start_from', type=str, default='save', help='')
 parser.add_argument('--re_ranking', type=int, default=80, help='The number of re-ranking size')
 
 parser.add_argument('--kim', type=int, default=1, help='whether evaluate CNN_KIM')
-parser.add_argument('--kim_name_root', type=str, default='model-api-cnn-',help='full name is (root+id+".pth") ')
+parser.add_argument('--kim_name_root', type=str, default='80p-model-api-cnn-',help='full name is (root+id+".pth") ')
 parser.add_argument('--kim_id_begin', type=int, default=1)
 parser.add_argument('--kim_id_end', type=int, default=30)
 
 parser.add_argument('--xml', type=int, default=1, help='whether evaluate XML_CNN')
-parser.add_argument('--xml_name_root', type=str, default='model-api-xml-cnn-',help='full name is (root+id+".pth") ')
+parser.add_argument('--xml_name_root', type=str, default='80-model-api-xml-cnn-',help='full name is (root+id+".pth") ')
 parser.add_argument('--xml_id_begin', type=int, default=1)
 parser.add_argument('--xml_id_end', type=int, default=30)
 
@@ -102,7 +102,11 @@ if args.kim !=0:
 
         print(elapsed)
 
-        evaled = evaluate_xin(Y_tst_pred, Y_tst)
+        evaled = []
+        # evaled = evaluate_xin(Y_tst_pred, Y_tst)
+        apm = AveragePrecisionMeter()
+        apm.add(Y_tst_pred, Y_tst)
+        evaled.append(float(apm.value().mean()))
         with open(os.path.join('analyse','cnn_kim.txt'),'a',encoding='utf-8') as f:
             print(model_name,*evaled,sep='\t',file=f)
         del(baseline)
@@ -138,7 +142,11 @@ if args.xml !=0:
 
         print(elapsed)
 
-        evaled = evaluate_xin(Y_tst_pred, Y_tst)
+        evaled = []
+        # evaled = evaluate_xin(Y_tst_pred, Y_tst)
+        apm = AveragePrecisionMeter()
+        apm.add(Y_tst_pred, Y_tst)
+        evaled.append(float(apm.value().mean()))
         with open(
                 os.path.join('analyse','xml_cnn.txt'),
                 'a',encoding='utf-8') \

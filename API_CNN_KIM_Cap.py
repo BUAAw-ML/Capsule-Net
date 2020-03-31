@@ -21,7 +21,7 @@ random.seed(0)
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--dataset', type=str, default='API_classify_data_60_t_percent.p',
+parser.add_argument('--dataset', type=str, default='API_classify_data_80_t_percent.p',
                     help='Options: eurlex_raw_text.p, API_classify_data(Programweb).p ')
 parser.add_argument('--vocab_size', type=int, default=30001, help='vocabulary size')
 parser.add_argument('--vec_size', type=int, default=300, help='embedding size')
@@ -121,6 +121,6 @@ for epoch in range(args.num_epochs):
     torch.cuda.empty_cache()
 
     if (epoch + 1) > 0:
-        checkpoint_path = os.path.join('save', 'model-api-cnn-' + str(epoch + 1) + '.pth')
+        checkpoint_path = os.path.join('save', '80p-model-api-cnn-' + str(epoch + 1) + '.pth')
         torch.save(CNN_net.state_dict(), checkpoint_path)
         print(" model saved to {}".format(checkpoint_path))
