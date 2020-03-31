@@ -31,7 +31,8 @@ def clean_str(string):
 
 
 def pad_sentences(sentences, padding_word="<PAD/>", max_length=500):
-    sequence_length = min(max(len(x) for x in sentences), max_length)
+    #sequence_length = min(max(len(x) for x in sentences), max_length)
+    sequence_length = max_length
     padded_sentences = []
     for i in range(len(sentences)):
         sentence = sentences[i]
