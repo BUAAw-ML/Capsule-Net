@@ -23,7 +23,7 @@ BATCHRANDOMSAMPLE =True
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--dataset', type=str, default='API_classify_data_60_t_percent.p',
+parser.add_argument('--dataset', type=str, default='API_classify_data_80_t_percent.p',
                     help='Options: eurlex_raw_text.p, API_classify_data(Programweb).p ')
 parser.add_argument('--vocab_size', type=int, default=30001, help='vocabulary size')
 parser.add_argument('--vec_size', type=int, default=300, help='embedding size')
@@ -107,10 +107,14 @@ for epoch in range(args.num_epochs):
     nr_trn_num = X_trn.shape[0]
     nr_batches = int(np.ceil(nr_trn_num / float(args.tr_batch_size)))
 
-    if epoch > args.learning_rate_decay_start and args.learning_rate_decay_start >= 0:
-        frac = (epoch - args.learning_rate_decay_start) // args.learning_rate_decay_every
-        decay_factor = args.learning_rate_decay_rate  ** frac
-        current_lr = current_lr * decay_factor
+    # if epoch > args.learning_rate_decay_start and args.learning_rate_decay_start >= 0:
+    #     frac = (epoch - args.learning_rate_decay_start) // args.learning_rate_decay_every
+    #     decay_factor = args.learning_rate_decay_rate  ** frac
+    #     current_lr = current_lr * decay_factor
+    if epoch > args.learning_rate_decay_start and epoch < 2*args.learning_rate_decay_start:
+        current_lr = 1e-4
+    elif epoch >= 2*args.learning_rate_decay_start:
+        current_lr *= args.learning_rate_decay_rate
     print(' ',current_lr)
     set_lr(optimizer, current_lr)
 
@@ -151,7 +155,7 @@ for epoch in range(args.num_epochs):
     torch.cuda.empty_cache()
 
     if (epoch + 1) > 0:
-        checkpoint_path = os.path.join('save', 'model-api-akde-short-60p-randomsample-' + str(epoch + 1) + '.pth')
+        checkpoint_path = os.path.join('save', '80-model-api-akde-short-' + str(epoch + 1) + '.pth')
         torch.save(capsule_net.state_dict(), checkpoint_path)
         print("model saved to {}".format(checkpoint_path))
 

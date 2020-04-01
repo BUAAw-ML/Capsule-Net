@@ -155,6 +155,7 @@ for epoch in range(args.num_epochs):
                       batch_loss, elapsed),
                       end="")
 
+    # evaluate
     if (epoch + 1) > 20 and (epoch + 1)<30:         
 
         nr_tst_num = X_tst.shape[0]
