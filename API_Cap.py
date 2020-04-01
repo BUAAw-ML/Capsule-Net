@@ -34,8 +34,8 @@ parser.add_argument('--tr_batch_size', type=int, default=256, help='Batch size f
 parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for training')
 parser.add_argument('--start_from', type=str, default='', help='')
 
-parser.add_argument('--num_compressed_capsule', type=int, default=64, help='The number of compact capsules')
-parser.add_argument('--dim_capsule', type=int, default=8, help='The number of dimensions for capsules')
+parser.add_argument('--num_compressed_capsule', type=int, default=128, help='The number of compact capsules')
+parser.add_argument('--dim_capsule', type=int, default=16, help='The number of dimensions for capsules')
 
 parser.add_argument('--learning_rate_decay_start', type=int, default=10,
                     help='at what iteration to start decaying learning rate? (-1 = dont) (in epoch)')
@@ -44,6 +44,7 @@ parser.add_argument('--learning_rate_decay_every', type=int, default=20,
 parser.add_argument('--learning_rate_decay_rate', type=float, default=0.95,
                     help='how many iterations thereafter to drop LR?(in epoch)')
 
+parser.add_argument('--gradient_accumulation_steps', type=int, default=8)
 
 
 args = parser.parse_args()
@@ -69,7 +70,7 @@ capsule_net = CapsNet_Text(args, embedding_weights)
 capsule_net = nn.DataParallel(capsule_net).cuda()
 
 
-def transformLabels(labels):
+def transformLabels(labels, total_labels):
     '''
 
     :param labels:[ ['1','3'],
@@ -80,7 +81,7 @@ def transformLabels(labels):
         [[1. 1. 0.]
          [1. 1. 1.]]
     '''
-    label_index = list(set([l for _ in labels for l in _]))
+    label_index = list(set([l for _ in total_labels for l in _]))
     label_index.sort()
 
     variable_num_classes = len(label_index)
@@ -118,6 +119,7 @@ for epoch in range(args.num_epochs):
     print(' ',current_lr)
     set_lr(optimizer, current_lr)
 
+    # shuffle data
     if (epoch >0) and BATCHRANDOMSAMPLE:
         temp = np.random.permutation(len(Y_trn_o))
         X_trn = X_trn[temp,:]
@@ -132,30 +134,42 @@ for epoch in range(args.num_epochs):
 
         X = X_trn[start_idx:end_idx]
         Y = Y_trn_o[start_idx:end_idx]
-        data = Variable(torch.from_numpy(X).long()).cuda()
+        batch_steps = int(np.ceil(len(X)) / (float(args.tr_batch_size) / float(args.gradient_accumulation_steps)))
+        batch_loss = 0
+        for i in range(batch_steps):
+            step_size = int(float(args.tr_batch_size) // float(args.gradient_accumulation_steps))
+            step_X = X[i * step_size: (i + 1) * step_size]
+            step_Y = Y[i * step_size: (i + 1) * step_size]
 
-        batch_labels, batch_target = transformLabels(Y)
-        # print('\nbatch_labels_len:',len(batch_labels))
-        batch_target = Variable(torch.from_numpy(batch_target).float()).cuda()
-        optimizer.zero_grad()
-        poses, activations = capsule_net(data, batch_labels)
-        loss = BCE_loss(activations, batch_target)
-        loss.backward()
+            step_X = Variable(torch.from_numpy(step_X).long()).cuda()
+            step_labels, step_target = transformLabels(step_Y, Y)
+            step_target = Variable(torch.from_numpy(step_target).float()).cuda()
+
+            poses, activations = capsule_net(step_X, step_labels)
+            step_loss = BCE_loss(activations, step_target)
+            step_loss = step_loss / args.gradient_accumulation_steps
+            step_loss.backward()
+            batch_loss += step_loss.item()
+
         optimizer.step()
-        torch.cuda.empty_cache()
+        optimizer.zero_grad()
         done = time.time()
         elapsed = done - start
 
         print("\rEpoch: {} Iteration: {}/{} ({:.1f}%)  Loss: {:.5f} {:.5f}".format(
                       epoch, iteration, nr_batches,
                       iteration * 100 / nr_batches,
-                      loss.item(), elapsed),
+                      batch_loss, elapsed),
                       end="")
 
     torch.cuda.empty_cache()
 
+    # save trained model
     if (epoch + 1) > 0:
         checkpoint_path = os.path.join('save', '80-model-api-akde-short-' + str(epoch + 1) + '.pth')
         torch.save(capsule_net.state_dict(), checkpoint_path)
         print("model saved to {}".format(checkpoint_path))
 
+    # evaluate
+    if epoch+1 > 5 :
+        
